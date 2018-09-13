@@ -10,7 +10,7 @@ Descricao: Programa para adicionar ou subtrair tempo nas legendas em formato SRT
 EN Version: This is a short program to increment or reduce srt subtitle files. To use it call this program passing
 these arguments ./submanager -file:<file.srt> -time=<time in ms>
 
-Make sure you entered time argument as millescond. Positive value will increate the time to subtitle shows up and
+Make sure you entered time argument as millesecond. Positive value will increase the time to subtitle shows up and
 negative value will decrese this time instead.
 
                                         `:+shhso+/

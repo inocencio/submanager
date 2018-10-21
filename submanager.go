@@ -43,6 +43,10 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"github.com/dustin/go-humanize"
+	"github.com/paulrademacher/climenu"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -52,7 +56,7 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-var srtfilepath string
+//var srtfilepath string
 
 type TextPart struct {
 	num   string
@@ -70,38 +74,128 @@ func main() {
 
 	flag.Parse()
 
-	//fmt.Print(aurora.Green(">> SubStr Manager v0.1 <<\n\n").Bold())
-	fmt.Println(aurora.Colorize(">> SubStr Manager v0.1 <<", aurora.GrayFg|aurora.GreenBg|aurora.BoldFm))
+	fmt.Println(aurora.Colorize(">> SubStr Manager v0.2 <<", aurora.GrayFg|aurora.GreenBg|aurora.BoldFm))
 
-	if *timePtr == 0 {
-		fmt.Println(aurora.Red("Informe um 'time'. Ex: -time=-1000"))
-		isNotFlag = true
-	}
+	if *timePtr == 0 && *filePtr == "" {
+		//no arguments found, seek for video files and check the correspondent srt file
+		files, err := ioutil.ReadDir("./")
+		videos := make([]string, 0)
+		subtitles := make([]string, 0)
 
-	if *filePtr == "" {
-		fmt.Println(aurora.Red("Informe um 'file'. Ex: -file=\"minha legenda.srt\""))
-		isNotFlag = true
-	}
+		checkError(err)
 
-	if isNotFlag {
-		os.Exit(1)
-	}
+		//find the videos out
+		for _, f := range files {
+			n := s.ToLower(f.Name())
 
-	ex, err := os.Executable()
-	checkError(err)
+			if !s.Contains(n,"sample") && (
+				s.HasSuffix(n,".avi") ||
+				s.HasSuffix(n,".mp4") ||
+				s.HasSuffix(n, ".mkv") ||
+				s.HasSuffix(n, ".mov")) {
+					videos = append(videos, f.Name())
+			}
+		}
 
-	fmt.Println("CDir:          ", aurora.Cyan(filepath.Dir(ex)))
-	fmt.Println("Time:          ", aurora.Cyan(*timePtr), aurora.Cyan("ms"))
-	fmt.Println("File:          ", aurora.Cyan(*filePtr))
+		//find srt files
+		for _, v := range videos {
+			if v != "" {
+				ext := filepath.Ext(v)
+				fn := s.Split(v, ext)[0]
+				fn += ".srt"
 
-	srtfilepath = *filePtr
+				for _, f := range files {
+					if s.EqualFold(f.Name(), fn) {
+						subtitles = append(subtitles, f.Name())
+					}
+				}
+			}
+		}
 
-	if s.HasSuffix(srtfilepath, ".srt") {
-		//todos os parametros OK? Entao converte o tempo do arquivo SRT.
-		strShifter(srtfilepath, *timePtr)
+		if len(subtitles) == 0 {
+			fmt.Println(aurora.Red("No SRT files found!\n"),
+				"\nMake sure there is a SRT file and this file must have the same name of video's file.")
+			os.Exit(0)
+		}
+
+		//show srt files and menu
+		fmt.Println("SRT file(s) found:")
+		for _, f := range subtitles {
+			if f != "" {
+				//fmt.Println("File:          ", aurora.Cyan(f))
+				fmt.Println(aurora.Cyan(f))
+			}
+		}
+		fmt.Println()
+
+		m := climenu.NewButtonMenu("","Choose an option to sync the SRT subtitle file")
+		m.AddMenuItem("Custom", "custom")
+		m.AddMenuItem("-2000 ms (rush)", "-2000")
+		m.AddMenuItem("-1500 ms (rush)", "-1500")
+		m.AddMenuItem("-1000 ms (rush)", "-1000")
+		m.AddMenuItem(" -500 ms (rush)", "-500")
+		m.AddMenuItem("  500 ms (delay)", "500")
+		m.AddMenuItem(" 1000 ms (delay)", "1000")
+		m.AddMenuItem(" 1500 ms (delay)", "1500")
+		m.AddMenuItem(" 2000 ms (delay)", "2000")
+
+		action, escaped := m.Run()
+
+		if escaped {
+			os.Exit(0)
+		}
+		fmt.Println()
+
+		time := 0
+
+		//time from menu or entry?
+		if action != "custom" {
+			time, _ = strconv.Atoi(action)
+		} else {
+			response := climenu.GetText("Enter time in milliseconds", "0")
+
+			if response == "0" {
+				fmt.Println("No entry time found!")
+				os.Exit(0)
+			}
+
+			time, _ = strconv.Atoi(response)
+		}
+
+		//sync subtitles
+		for _, f := range subtitles {
+			if f != "" {
+				strShifter(f, time)
+			}
+		}
 	} else {
-		//arquivo invalido
-		fmt.Println(aurora.Red("Error: O arquivo "), srtfilepath, aurora.Red(" não é uma extensão srt."))
+		//some arguments have been entered
+		if *timePtr == 0 {
+			fmt.Println(aurora.Red("Informe um 'time'. Ex: -time=-1000"))
+			isNotFlag = true
+		}
+
+		if *filePtr == "" {
+			fmt.Println(aurora.Red("Informe um 'file'. Ex: -file=\"minha legenda.srt\""))
+			isNotFlag = true
+		}
+
+		if isNotFlag {
+			os.Exit(1)
+		}
+
+		ex, err := os.Executable()
+		checkError(err)
+
+		fmt.Println("CDir:          ", aurora.Cyan(filepath.Dir(ex)))
+
+		if s.HasSuffix(*filePtr, ".srt") {
+			//todos os parametros OK? Entao converte o tempo do arquivo SRT.
+			strShifter(*filePtr, *timePtr)
+		} else {
+			//arquivo invalido
+			fmt.Println(aurora.Red("Error: O arquivo "), *filePtr, aurora.Red(" não é uma extensão srt."))
+		}
 	}
 }
 
@@ -172,8 +266,12 @@ func convertStrToInt(str string) (int, error) {
 /**
 Ajusta o tempo em millesegundos da legenda. Valores positivos, aumenta o tempo da legenda em relação ao
 vídeo enquanto valores negativos reduz o tempo da legenda.
+@param filename, timestamp
 */
 func strShifter(filename string, timestamp int) {
+	fmt.Println("Time:          ", aurora.Cyan(timestamp), aurora.Cyan("ms"))
+	fmt.Println("File:          ", aurora.Cyan(filename))
+
 	file, err := os.Open(filename)
 	checkError(err)
 	defer file.Close()
@@ -237,7 +335,6 @@ func strShifter(filename string, timestamp int) {
 
 		buffer.WriteString(e.num + br)
 		buffer.WriteString(e.time + br)
-		fmt.Println("entrada")
 
 		for _, _e := range e.lines {
 			buffer.WriteString(_e + br)
@@ -247,16 +344,20 @@ func strShifter(filename string, timestamp int) {
 	}
 
 	//cria o arquivo
-	file, err = os.Create(srtfilepath)
+	//file, err = os.Create(srtfilepath)
+	file, err = os.Create(filename)
 	//escreve no arquivo criado
 	n, err := file.Write(buffer.Bytes())
+	checkError(err)
 	file.Sync()
 
-	fmt.Println("Written Bytes: ", aurora.Cyan(n))
+	//fmt.Println("Written Bytes: ", aurora.Cyan(n))
+	fmt.Println("KBytes Written:", aurora.Cyan(humanize.Bytes(uint64(n))))
 }
 
 func checkError(e error) {
 	if e != nil {
+		log.Println("Error: ", e)
 		panic(e)
 	}
 }

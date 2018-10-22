@@ -15,15 +15,16 @@
     <session id="-29219748">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="7" />
+          <entry key="project.closed" value="8" />
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.1" value="2" />
           <entry key="project.open.time.15" value="1" />
           <entry key="project.open.time.2" value="1" />
           <entry key="project.open.time.51" value="1" />
+          <entry key="project.open.time.61" value="1" />
           <entry key="project.open.time.8" value="1" />
           <entry key="project.open.time.9" value="1" />
-          <entry key="project.opened" value="8" />
+          <entry key="project.opened" value="9" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -40,14 +41,14 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="go" value="3116" />
+          <entry key="go" value="3528" />
           <entry key="md" value="5" />
           <entry key="txt" value="96" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Go" value="3116" />
+          <entry key="Go" value="3528" />
           <entry key="Markdown" value="5" />
           <entry key="PLAIN_TEXT" value="96" />
         </counts>
@@ -59,8 +60,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/submanager.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="377">
-              <caret line="353" column="6" selection-start-line="353" selection-start-column="6" selection-end-line="353" selection-end-column="6" />
+            <state relative-caret-position="-411">
+              <caret line="286" column="10" lean-forward="true" selection-start-line="286" selection-start-column="10" selection-end-line="286" selection-end-column="10" />
             </state>
           </provider>
         </entry>
@@ -217,8 +218,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/submanager.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="377">
-          <caret line="353" column="6" selection-start-line="353" selection-start-column="6" selection-end-line="353" selection-end-column="6" />
+        <state relative-caret-position="-411">
+          <caret line="286" column="10" lean-forward="true" selection-start-line="286" selection-start-column="10" selection-end-line="286" selection-end-column="10" />
         </state>
       </provider>
     </entry>

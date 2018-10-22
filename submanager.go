@@ -56,8 +56,6 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-//var srtfilepath string
-
 type TextPart struct {
 	num   string
 	time  string
@@ -68,9 +66,9 @@ func main() {
 
 	isNotFlag := false
 
-	timePtr := flag.Int("time", 0, "O tempo é dado em millisegundos (1000ms = 1s) "+
-		"Valores acima de 0 atrasa a legenda, abaixo de 0, adianta.")
-	filePtr := flag.String("file", "", "Nome do arquivo SRT.")
+	timePtr := flag.Int("time", 0, "The time is giving in milliseconds (1000ms = 1s) "+
+		"Values above 0 delay the caption, below 0, rush the time.")
+	filePtr := flag.String("file", "", "SRT file name.")
 
 	flag.Parse()
 
@@ -113,7 +111,7 @@ func main() {
 		}
 
 		if len(subtitles) == 0 {
-			fmt.Println(aurora.Red("No SRT files found!\n"),
+			fmt.Println(aurora.Red("No SRT file(s) found!\n"),
 				"\nMake sure there is a SRT file and this file must have the same name of video's file.")
 			os.Exit(0)
 		}
@@ -146,37 +144,37 @@ func main() {
 		}
 		fmt.Println()
 
-		time := 0
+		elapsedTime := 0
 
-		//time from menu or entry?
+		//elapsedTime from menu or entry?
 		if action != "custom" {
-			time, _ = strconv.Atoi(action)
+			elapsedTime, _ = strconv.Atoi(action)
 		} else {
-			response := climenu.GetText("Enter time in milliseconds", "0")
+			response := climenu.GetText("Enter time to sync in milliseconds", "0")
 
 			if response == "0" {
-				fmt.Println("No entry time found!")
+				fmt.Println("No time input!")
 				os.Exit(0)
 			}
 
-			time, _ = strconv.Atoi(response)
+			elapsedTime, _ = strconv.Atoi(response)
 		}
 
 		//sync subtitles
 		for _, f := range subtitles {
 			if f != "" {
-				strShifter(f, time)
+				strShifter(f, elapsedTime)
 			}
 		}
 	} else {
 		//some arguments have been entered
 		if *timePtr == 0 {
-			fmt.Println(aurora.Red("Informe um 'time'. Ex: -time=-1000"))
+			fmt.Println(aurora.Red("Enter a 'time' argument. E.g.: -time=-1000"))
 			isNotFlag = true
 		}
 
 		if *filePtr == "" {
-			fmt.Println(aurora.Red("Informe um 'file'. Ex: -file=\"minha legenda.srt\""))
+			fmt.Println(aurora.Red("Enter a 'file' argument. E.g.: -file=\"my_subtitle.srt\""))
 			isNotFlag = true
 		}
 
@@ -190,11 +188,15 @@ func main() {
 		fmt.Println("CDir:          ", aurora.Cyan(filepath.Dir(ex)))
 
 		if s.HasSuffix(*filePtr, ".srt") {
-			//todos os parametros OK? Entao converte o tempo do arquivo SRT.
+			//everything goes right, so sync it
 			strShifter(*filePtr, *timePtr)
 		} else {
-			//arquivo invalido
-			fmt.Println(aurora.Red("Error: O arquivo "), *filePtr, aurora.Red(" não é uma extensão srt."))
+			//invalid file
+			if *filePtr != "" {
+				fmt.Println(aurora.Red("Error: "), *filePtr, aurora.Red(" is not a srt. file"))
+			} else {
+				fmt.Println(aurora.Red("Error: There is no SRT file."))
+			}
 		}
 	}
 }
@@ -343,21 +345,19 @@ func strShifter(filename string, timestamp int) {
 		buffer.WriteString(br)
 	}
 
-	//cria o arquivo
-	//file, err = os.Create(srtfilepath)
 	file, err = os.Create(filename)
-	//escreve no arquivo criado
+	//write bytes to file
 	n, err := file.Write(buffer.Bytes())
 	checkError(err)
 	file.Sync()
+	defer file.Close()
 
-	//fmt.Println("Written Bytes: ", aurora.Cyan(n))
 	fmt.Println("KBytes Written:", aurora.Cyan(humanize.Bytes(uint64(n))))
 }
 
 func checkError(e error) {
 	if e != nil {
-		log.Println("Error: ", e)
+		log.Println("Fatal Error: ", e)
 		panic(e)
 	}
 }

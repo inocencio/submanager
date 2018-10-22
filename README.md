@@ -25,4 +25,4 @@ For first option, follow these instructions down below:
 `time` flag is an integer input by milleseconds (ms);
 `file` flag is a string input of srt file name;
 
-For second option, the program will find the SRT file corresponding to the video. A menu with a input time will shows up. Just pick one or chose custom option.
+For second option, the program will find the SRT file corresponding to the video. A menu with an input time will shows up. Just pick one or chose custom option.
